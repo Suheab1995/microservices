@@ -18,9 +18,12 @@ def register():
     username = data.get('username')
     password = data.get('password')
     hashed_password = generate_password_hash(password)
-    new_user = User(username=username, password=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
+    
+    with app.app_context():
+        new_user = User(username=username, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+    
     return jsonify({'message': 'User registered successfully'}), 201
 
 @app.route('/login', methods=['POST'])
@@ -28,11 +31,14 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password, password):
-        return jsonify({'message': 'Invalid username or password'}), 401
-    return jsonify({'message': 'Login successful'}), 200
+    
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if not user or not check_password_hash(user.password, password):
+            return jsonify({'message': 'Invalid username or password'}), 401
+        return jsonify({'message': 'Login successful'}), 200
 
 if __name__ == '__main__':
-    db.create_all()
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
